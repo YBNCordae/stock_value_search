@@ -6,6 +6,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# CloudBase / 容器平台一般用 PORT 环境变量
-EXPOSE 8501
-CMD ["bash", "-lc", "streamlit run app.py --server.address=0.0.0.0 --server.port=${PORT:-8501}"]
+EXPOSE 80
+ENV STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
+CMD ["bash", "-lc", "streamlit run app.py --server.address=0.0.0.0 --server.port=80"]
