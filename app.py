@@ -186,5 +186,16 @@ fig.update_layout(
 st.plotly_chart(fig, use_container_width=True)
 
 
-with st.expander("查看原始数据"):
-    st.dataframe(df_use, use_container_width=True)
+with st.expander("查看原始数据（含单股价格）"):
+    df_show = df_use.copy()
+    df_show = df_show.rename(columns={"trade_date": "日期", "close": "单股价格"})
+    st.dataframe(df_show, use_container_width=True)
+
+    csv = df_show.to_csv(index=False).encode("utf-8-sig")
+    st.download_button(
+        "下载 CSV",
+        data=csv,
+        file_name=f"{ts_code}_{asof}_last{len(df_use)}.csv",
+        mime="text/csv"
+    )
+
