@@ -3,6 +3,8 @@ import requests
 import pandas as pd
 import streamlit as st
 import matplotlib.pyplot as plt
+import plotly.graph_objects as go
+
 
 st.set_page_config(page_title="A股股价对比", layout="wide")
 st.title("A股：最新价 vs 历史区间均值 / 最高 / 最低")
@@ -109,18 +111,72 @@ c5.metric("区间位置(0~1)", f"{pos_in_range:.2f}")
 
 st.caption("说明：这里的“今日价”默认采用**最新交易日收盘价**（盘中实时价需要额外接实时行情源）。")
 
-# -------- 展示：图（收盘价 + 三条线 + 最新点）--------
-fig, ax = plt.subplots()
-ax.plot(df_use["trade_date"], df_use["close"])
-ax.axhline(mean, linewidth=1)
-ax.axhline(high, linewidth=1)
-ax.axhline(low, linewidth=1)
-ax.scatter(df_use["trade_date"].iloc[-1], today_close)
+# -------- 展示：Plotly 更美观的交互图 --------
+x = df_use["trade_date"]
+y = df_use["close"]
 
-ax.set_xlabel("Date")
-ax.set_ylabel("Close")
-ax.set_title(f"{ts_code} | {len(df_use)} bars | asof {asof}")
-st.pyplot(fig, clear_figure=True)
+fig = go.Figure()
+
+# 价格折线
+fig.add_trace(go.Scatter(
+    x=x, y=y,
+    mode="lines",
+    name="Close",
+    hovertemplate="Date=%{x|%Y-%m-%d}<br>Close=%{y:.2f}<extra></extra>"
+))
+
+# 最新点（更醒目）
+fig.add_trace(go.Scatter(
+    x=[x.iloc[-1]], y=[today_close],
+    mode="markers",
+    name="Latest",
+    marker=dict(size=10),
+    hovertemplate="Latest<br>Date=%{x|%Y-%m-%d}<br>Close=%{y:.2f}<extra></extra>"
+))
+
+# 三条水平线：mean/high/low（用 shape 画，干净不抢 legend）
+xmin, xmax = x.iloc[0], x.iloc[-1]
+for val, label in [(mean, "Mean"), (high, "High"), (low, "Low")]:
+    fig.add_shape(
+        type="line",
+        x0=xmin, x1=xmax,
+        y0=val, y1=val,
+        xref="x", yref="y",
+        line=dict(width=1, dash="dot"),
+    )
+    # 右侧标注文字
+    fig.add_annotation(
+        x=xmax, y=val,
+        xref="x", yref="y",
+        text=f"{label}: {val:.2f}",
+        showarrow=False,
+        xanchor="left",
+        yanchor="middle",
+        font=dict(size=12)
+    )
+
+# 可选：把 low~high 区间做成淡淡的“范围带”，更直观（喜欢就留着）
+fig.add_shape(
+    type="rect",
+    x0=xmin, x1=xmax,
+    y0=low, y1=high,
+    xref="x", yref="y",
+    fillcolor="rgba(0,0,0,0.05)",
+    line=dict(width=0),
+    layer="below"
+)
+
+fig.update_layout(
+    title=f"{ts_code} | {len(df_use)} bars | asof {asof}",
+    xaxis_title="Date",
+    yaxis_title="Close",
+    hovermode="x unified",
+    margin=dict(l=10, r=10, t=50, b=10),
+    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+)
+
+st.plotly_chart(fig, use_container_width=True)
+
 
 with st.expander("查看原始数据"):
     st.dataframe(df_use, use_container_width=True)
