@@ -56,7 +56,15 @@ with colL:
 
 with colR:
     if mode == "最近N个交易日":
-        window = st.selectbox("N（交易日）", [20, 60, 120, 250, 500], index=1)
+        window = st.number_input(
+            "N（交易日）",
+            min_value=5,
+            max_value=2000,
+            value=60,
+            step=1
+        )
+        window = int(window)
+
         # 取足够长的日线，再 tail(N)
         end = dt.date.today()
         start = end - dt.timedelta(days=900)
