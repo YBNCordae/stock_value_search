@@ -4,6 +4,7 @@ import pandas as pd
 import streamlit as st
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
+import os
 
 
 st.set_page_config(page_title="A股股价对比", layout="wide")
@@ -75,11 +76,19 @@ with colR:
 
 ts_code = to_ts_code(code)
 
-# -------- 读取 token（Secrets）--------
-if "TUSHARE_TOKEN" not in st.secrets:
-    st.error("未检测到 TUSHARE_TOKEN。请在 Streamlit Cloud 的 Secrets 里配置它（见下方第4步）。")
+# -------- 读取 token：优先 Streamlit Secrets，其次环境变量 --------
+token = None
+try:
+    token = st.secrets.get("TUSHARE_TOKEN")  # Streamlit Community Cloud
+except Exception:
+    token = None
+
+if not token:
+    token = os.environ.get("TUSHARE_TOKEN")  # CloudBase / Docker / 本地
+
+if not token:
+    st.error("未检测到 TUSHARE_TOKEN。请在环境变量中配置 TUSHARE_TOKEN（CloudBase）或在 Secrets 中配置（Streamlit Cloud）。")
     st.stop()
-token = st.secrets["TUSHARE_TOKEN"]
 
 # -------- 拉取 + 计算 --------
 try:
