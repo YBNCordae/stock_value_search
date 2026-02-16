@@ -119,6 +119,26 @@ c5.metric("区间位置(0~1)", f"{pos_in_range:.2f}")
 
 st.caption("说明：这里的“今日价”默认采用**最新交易日收盘价**（盘中实时价需要额外接实时行情源）。")
 
+# ===== 更直观的“区间位置”展示 =====
+st.subheader("区间位置可视化")
+
+# 1) Low / Today / High 三个数字卡片
+a, b, c = st.columns(3)
+a.metric("区间最低 (Low)", f"{low:.2f}")
+b.metric(f"最新价 (Today, asof {asof})", f"{today_close:.2f}")
+c.metric("区间最高 (High)", f"{high:.2f}")
+
+# 2) 位置进度条（0~100%）
+pos_pct = int(round(pos_in_range * 100))
+st.progress(pos_in_range)  # 0~1
+st.caption(f"位置：{pos_pct}%（0% = 贴近区间最低，100% = 贴近区间最高）")
+
+# 3) 可选：把“距离两端”也写清楚（更有感觉）
+st.write(
+    f"距Low：{(today_close - low):.2f} ｜ 距High：{(high - today_close):.2f} ｜ 区间宽度：{(high - low):.2f}"
+)
+
+
 # -------- 展示：Plotly 更美观的交互图 --------
 x = df_use["trade_date"]
 y = df_use["close"]
